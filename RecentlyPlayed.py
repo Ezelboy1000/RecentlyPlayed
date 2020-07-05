@@ -27,6 +27,12 @@ recently_played_id = ''
 playing_track_id = ''
 playing = False
 
+def login():
+  global token
+  global spotify
+  token = util.prompt_for_user_token(username, scope, client_id, client_secret, redirect_uri)
+  spotify = spotipy.Spotify(auth=token)
+
 def checkplaylist():
   global recently_played_id
   # Gets all users PUBLIC playlists
@@ -55,13 +61,21 @@ def checkplaying():
   playing = False
   # Checks if a song is playing, if not check again after set interval time
   while playing == False:
-    check_playing = spotify.currently_playing(market=None)
-    if check_playing['is_playing'] == True:
-      if check_playing['currently_playing_type'] == 'track':
-        playing = True
+    try:
+      check_playing = spotify.currently_playing(market=None)
+      if check_playing['is_playing'] == True:
+        if check_playing['currently_playing_type'] == 'track':
+          playing = True
+        else:
+          time.sleep(refresh_interval)
       else:
         time.sleep(refresh_interval)
-    else:
+    except spotipy.client.SpotifyException:
+      # re-authenticate when token expires
+      thread = threading.Thread(target=login)
+      thread.start()
+      thread.join()
+    except:
       time.sleep(refresh_interval)
 
 def checknewsong():
@@ -116,28 +130,34 @@ def main():
   thread.join()
 
   while True:
-    # Start a thread to poll if user playing anything
-    thread = threading.Thread(target=checkplaying)
-    thread.start()
-    thread.join()
-
-    # Only do the other tasks if we're actually playing something
-    if playing == True:
-      # Start a thread to poll if a new song is playing
-      thread = threading.Thread(target=checknewsong)
+    try:
+      # Start a thread to poll if user playing anything
+      thread = threading.Thread(target=checkplaying)
       thread.start()
       thread.join()
 
-      # Start a thread to add the new song to the playlist (if it's not already on there)
-      thread = threading.Thread(target=addsongtoplaylist)
-      thread.start()
-      thread.join()
-
-      # Start a thread to clean the playlist (remove all songs on position over the playlist size)
-      if clean == True:
-        thread = threading.Thread(target=cleanplaylist)
+      # Only do the other tasks if we're actually playing something
+      if playing == True:
+        # Start a thread to poll if a new song is playing
+        thread = threading.Thread(target=checknewsong)
         thread.start()
         thread.join()
+
+        # Start a thread to add the new song to the playlist (if it's not already on there)
+        thread = threading.Thread(target=addsongtoplaylist)
+        thread.start()
+        thread.join()
+
+        # Start a thread to clean the playlist (remove all songs on position over the playlist size)
+        if clean == True:
+          thread = threading.Thread(target=cleanplaylist)
+          thread.start()
+          thread.join()
+    except spotipy.client.SpotifyException:
+      # re-authenticate when token expires
+      thread = threading.Thread(target=login)
+      thread.start()
+      thread.join()
 
 if __name__ == '__main__':
   # Start main
