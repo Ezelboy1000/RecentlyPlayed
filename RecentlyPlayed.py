@@ -30,6 +30,7 @@ playing = False
 def login():
   global token
   global spotify
+  # Updates the login
   token = util.prompt_for_user_token(username, scope, client_id, client_secret, redirect_uri)
   spotify = spotipy.Spotify(auth=token)
 
@@ -70,12 +71,12 @@ def checkplaying():
           time.sleep(refresh_interval)
       else:
         time.sleep(refresh_interval)
-    except spotipy.client.SpotifyException:
+    except:
       # re-authenticate when token expires
       thread = threading.Thread(target=login)
       thread.start()
       thread.join()
-    except:
+      # sleep for our set time to not spam the API
       time.sleep(refresh_interval)
 
 def checknewsong():
@@ -153,7 +154,7 @@ def main():
           thread = threading.Thread(target=cleanplaylist)
           thread.start()
           thread.join()
-    except spotipy.client.SpotifyException:
+    except:
       # re-authenticate when token expires
       thread = threading.Thread(target=login)
       thread.start()
