@@ -10,5 +10,11 @@ What it does or doesn't do:
 - Option to move tracks back to top when played again (on by default)
 
 What you'll need:
+- Python 3
 - A Spotify Account
 - A new app on the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/login)
+
+How to use:
+- Edit settings in RecentlyPlayed.py
+- pip install -r requirements.txt
+- python RecentlyPlayed.py
