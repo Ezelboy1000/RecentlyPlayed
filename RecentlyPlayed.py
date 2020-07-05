@@ -38,7 +38,7 @@ def checkplaylist():
 
   # If there is no playlist called RecentlyPlayed, make one and fill it with tracks
   if recently_played_id == '':
-    create = spotify.user_playlist_create(username, 'RecentlyPlayed', public=True, description='Automatically generated playlist with the last 50 tracks you\'ve listened to!')
+    create = spotify.user_playlist_create(username, 'RecentlyPlayed', public=True, description='Automatically generated playlist with the last tracks you\'ve listened to!')
     recently_played_id = create['id']
     
     # If set will fill the playlist with recent tracks pulled from Spotify
