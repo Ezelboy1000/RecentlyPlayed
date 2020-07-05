@@ -15,6 +15,6 @@ What you'll need:
 - A new app on the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/login)
 
 How to use:
-- Edit settings in RecentlyPlayed.py
+- Edit the config section in RecentlyPlayed.py
 - pip install -r requirements.txt
 - python RecentlyPlayed.py
