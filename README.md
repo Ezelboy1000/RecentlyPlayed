@@ -18,3 +18,6 @@ How to use:
 - Edit the config section in RecentlyPlayed.py
 - pip install -r requirements.txt
 - python RecentlyPlayed.py
+
+Known bugs:
+- Can't find the RecentlyPlayed playlist anymore when set to Private
