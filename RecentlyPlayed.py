@@ -17,12 +17,14 @@ fill_size = 50 # Amount of tracks to pull when prefilling, MAX 50
 clean = True # Removes songs when playlist gets above playlist_size
 playlist_size = 50 # Max size of playlist
 move_playing = True # Moves the song back to the top of the playlist when playing it again
+move_playing_playlist = False # Moves the song back the the top when playing the RecentlyPlayed playlist
 
 ##############
 
-scope = 'user-read-currently-playing,user-read-recently-played,playlist-modify-private,playlist-modify-public,ugc-image-upload'
+scope = 'user-read-currently-playing,user-read-recently-played,playlist-read-private,playlist-modify-private,playlist-modify-public'
 token = util.prompt_for_user_token(username, scope, client_id, client_secret, redirect_uri)
 spotify = spotipy.Spotify(auth=token)
+playing_recently_played_playlist = False
 recently_played_id = ''
 playing_track_id = ''
 playing = False
@@ -36,7 +38,7 @@ def login():
 
 def checkplaylist():
   global recently_played_id
-  # Gets all users PUBLIC playlists
+  # Gets all users playlists
   playlists = spotify.current_user_playlists(limit=50, offset=0)
   # Search for a playlist named RecentlyPlayed, if there is one use that
   for playlist in playlists['items']:
@@ -45,7 +47,7 @@ def checkplaylist():
 
   # If there is no playlist called RecentlyPlayed, make one and fill it with tracks
   if recently_played_id == '':
-    create = spotify.user_playlist_create(username, 'RecentlyPlayed', public=True, description='Automatically generated playlist with the last tracks you\'ve listened to!')
+    create = spotify.user_playlist_create(username, 'RecentlyPlayed', public=False, description='Made with: https://github.com/Ezelboy1000/RecentlyPlayed')
     recently_played_id = create['id']
     
     # If set will fill the playlist with recent tracks pulled from Spotify
@@ -81,6 +83,7 @@ def checkplaying():
 
 def checknewsong():
   global playing_track_id
+  global playing_recently_played_playlist
   newtrack = 'no'
   # Keep looping till we find a new track
   while newtrack == 'no':
@@ -92,6 +95,17 @@ def checknewsong():
     if current_track['item']['id'] != playing_track_id:
       playing_track_id = current_track['item']['id']
       newtrack = 'yes'
+      # Check if we're playing the RecentlyPlayed playlist
+      check_playing = spotify.currently_playing(market=None)
+      if check_playing['context']['type'] == 'playlist':
+        playing_playlist_id = check_playing['context']['uri'][17:]
+        playing_playlist_id_2 = check_playing['context']['uri'][33:]
+        if playing_playlist_id == recently_played_id:
+          playing_recently_played_playlist = True
+        elif playing_playlist_id_2 == recently_played_id:
+          playing_recently_played_playlist = True
+        else:
+          playing_recently_played_playlist = False
 
 def addsongtoplaylist():
   playlist = spotify.playlist(recently_played_id)
@@ -108,10 +122,17 @@ def addsongtoplaylist():
   # If enabled this will move the playing track to the top of the playlist
   if move_playing == True:
     if alreadyinplaylist == 'yes':
-        movetrack = []
-        movetrack.append(playing_track_id)
-        spotify.user_playlist_remove_all_occurrences_of_tracks(username, recently_played_id, movetrack)
-        spotify.user_playlist_add_tracks(username, recently_played_id, movetrack, position=0)
+      if move_playing_playlist == False:
+        if playing_recently_played_playlist == False:
+          movetrack = []
+          movetrack.append(playing_track_id)
+          spotify.user_playlist_remove_all_occurrences_of_tracks(username, recently_played_id, movetrack)
+          spotify.user_playlist_add_tracks(username, recently_played_id, movetrack, position=0)
+      else:
+          movetrack = []
+          movetrack.append(playing_track_id)
+          spotify.user_playlist_remove_all_occurrences_of_tracks(username, recently_played_id, movetrack)
+          spotify.user_playlist_add_tracks(username, recently_played_id, movetrack, position=0)
 
 def cleanplaylist():
   playlist = spotify.playlist(recently_played_id)
