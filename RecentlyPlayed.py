@@ -12,6 +12,7 @@ client_secret = 'CHANGE_ME' # App client secret
 redirect_uri = 'http://localhost:8080' # App redirect url
 
 refresh_interval = 5 # Seconds to wait inbetween checking if a new song is playing
+add_delay = 30 # Seconds to wait before adding a song to the playlist
 prefill = False # Pulls recent songs from Spotify when creating a playlist (has duplicates)
 fill_size = 50 # Amount of tracks to pull when prefilling, MAX 50
 clean = True # Removes songs when playlist gets above playlist_size
@@ -94,18 +95,23 @@ def checknewsong():
     # If our new ID from spotify is different from the one we have saved, save this as the new track and stop loop
     if current_track['item']['id'] != playing_track_id:
       playing_track_id = current_track['item']['id']
-      newtrack = 'yes'
-      # Check if we're playing the RecentlyPlayed playlist
-      check_playing = spotify.currently_playing(market=None)
-      if check_playing['context']['type'] == 'playlist':
-        playing_playlist_id = check_playing['context']['uri'][17:]
-        playing_playlist_id_2 = check_playing['context']['uri'][33:]
-        if playing_playlist_id == recently_played_id:
-          playing_recently_played_playlist = True
-        elif playing_playlist_id_2 == recently_played_id:
-          playing_recently_played_playlist = True
-        else:
-          playing_recently_played_playlist = False
+      time.sleep(add_delay)
+      current_track = spotify.current_user_playing_track()
+      if current_track['item']['id'] == playing_track_id:
+        newtrack = 'yes'
+        # Check if we're playing the RecentlyPlayed playlist
+        check_playing = spotify.currently_playing(market=None)
+        if check_playing['context']['type'] == 'playlist':
+          length1 = len(username) + 7 # Gets length to cut off the playlist uri (option 1)
+          length2 = len(username) + 23 # Gets length to cut off the playlist uri (option 2)
+          playing_playlist_id = check_playing['context']['uri'][length1:]
+          playing_playlist_id_2 = check_playing['context']['uri'][length2:]
+          if playing_playlist_id == recently_played_id:
+            playing_recently_played_playlist = True
+          elif playing_playlist_id_2 == recently_played_id:
+            playing_recently_played_playlist = True
+          else:
+            playing_recently_played_playlist = False
 
 def addsongtoplaylist():
   playlist = spotify.playlist(recently_played_id)
